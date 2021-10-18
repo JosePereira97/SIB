@@ -1,5 +1,5 @@
 import numpy as np
-from ..util.util import label_gen
+from si.util.util import label_gen
 
 __all__ = ['Dataset']
 
@@ -48,18 +48,17 @@ class Dataset:
         :rtype: [type]
         """
 
-        if ylabel and ylabel in df.columns:
+        if ylabel is not None and ylabel is df.columns:
             X = df.loc[:, df.columns != ylabel].to_numpy()
             Y = df.loc[:, ylabel].to_numpy()
-            xnames = list(df.columns)
-            xnames.remove(ylabel)
+            xnames = df.columns.tolist()
             yname = ylabel
         else:
-            X = df.to_numpy()
+            X = df.to_numpy() #tranforma um pandas em numpy
             Y = None
-            xnames = list(df.columns)
+            xnames = df.columns.tolist()  #em piton recorrente é list()
             yname = None
-        return cls(X, Y, xnames, yname)
+        return(cls(X,Y,xnames,yname))
 
     def __len__(self):
         """Returns the number of data points."""
@@ -67,7 +66,10 @@ class Dataset:
 
     def hasLabel(self):
         """Returns True if the dataset constains labels (a dependent variable)"""
-        return self.Y is not None
+        if self.Y is not None:
+            return True
+        else:
+            return False
 
     def getNumFeatures(self):
         """Returns the number of features"""
@@ -75,7 +77,10 @@ class Dataset:
 
     def getNumClasses(self):
         """Returns the number of label classes or 0 if the dataset has no dependent variable."""
-        return len(np.unique(self.Y)) if self.hasLabel() else 0
+        if self.hasLabel():
+            return(len(np.unique(self.Y)))
+        else:
+            return 0
 
     def writeDataset(self, filename, sep=","):
         """Saves the dataset to a file
@@ -85,19 +90,13 @@ class Dataset:
         :param sep: The fields separator, defaults to ","
         :type sep: str, optional
         """
+
         fullds = np.hstack((self.X, self.Y.reshape(len(self.Y), 1)))
         np.savetxt(filename, fullds, delimiter=sep)
 
-    def toDataframe(self):
+    def toDataframe(self): #fazermos sozinhos
         """ Converts the dataset into a pandas DataFrame"""
-        import pandas as pd
-        if self.Y is not None:
-            fullds = np.hstack((self.X, self.Y.reshape(len(self.Y), 1)))
-            columns = self._xnames[:]+[self._yname]
-        else:
-            fullds = self.X.copy()
-            columns = self._xnames[:]
-        return pd.DataFrame(fullds, columns=columns)
+        pass
 
     def getXy(self):
         return self.X, self.Y

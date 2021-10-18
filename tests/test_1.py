@@ -1,4 +1,14 @@
 import unittest
+import sys
+import os
+
+
+try:
+    import si
+except:
+    DIR = os.path.dirname(os.path.realpath(__file__))
+    PATH = os.path.join(DIR, '../src/')
+    sys.path.insert(0, PATH)
 
 
 class TestUnlabeledDataset(unittest.TestCase):
