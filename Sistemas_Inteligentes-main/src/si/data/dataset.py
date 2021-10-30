@@ -15,8 +15,8 @@ class Dataset:
             raise Exception("Trying to instanciate a DataSet without any data")
         self.X = X
         self.Y = Y
-        self._xnames = xnames if xnames else label_gen(X.shape[1])
-        self._yname = yname if yname else 'Y'
+        self._xnames = xnames if xnames else label_gen(X.shape[1]) #vamos criar o nome das colunas consoante o exel
+        self._yname = yname if yname else 'Y' #se n tiver nome a variavel dependente dá se o nome de Y
 
     @classmethod
     def from_data(cls, filename, sep=",", labeled=True):
@@ -29,17 +29,17 @@ class Dataset:
         :return: A DataSet object
         :rtype: DataSet
         """
-        data = np.genfromtxt(filename, delimiter=sep)
-        if labeled:
-            X = data[:, 0:-1]
-            Y = data[:, -1]
+        data = np.genfromtxt(filename, delimiter=sep) #carrega dados de um TXT
+        if labeled: #se tiver nomes na tabela
+            X = data[:, 0:-1] #vai bucar as colunas do Array np exepto a ultima
+            Y = data[:, -1] #Vai buscar o valor das variaveis dependentes
         else:
-            X = data
+            X = data #se não for label os dados vão estar todos em dentro de um array
             Y = None
-        return cls(X, Y)
+        return cls(X, Y) #retornar uma classe com os dados do np array
 
     @classmethod
-    def from_dataframe(cls, df, ylabel=None):
+    def from_dataframe(cls, df, ylabel=None): #cria um dataset a partir de pandar dataframe
         """Creates a DataSet from a pandas dataframe.
 
         :param df: [description]
@@ -50,35 +50,33 @@ class Dataset:
         :rtype: [type]
         """
         if ylabel is not None and ylabel in df.colums:
-            X = df.loc[:, df.colums != ylabel].to_numpy()
-            Y = df.loc[:, df.colums == ylabel].to_numpy()
+            X = df.loc[:, df.colums != ylabel].to_numpy() #vai bucar os valores todos que n sejam 
+            Y = df.loc[:, df.colums == ylabel].to_numpy() #vai buscar os valores das variaveis dependentes
             # ou df.loc[:,ylabel].to_numpy()
-            Xnames = df.colums.tolist().remove(ylabel)
-            Yname = ylabel
+            Xnames = df.colums.tolist().remove(ylabel) #nome das colunas todos os que n tiverem em y_label
+            Yname = ylabel#nome das linhas todos os que tiverem em y_label
         else:
             X= df.to_numpy()
             Y = None
             Xnames= df.colums.tolist()
             Yname = None
-        return cls(X,Y,Xnames,Yname)
+        return cls(X,Y,Xnames,Yname) #devolve a classe com os dados X,Y e os nomes de colunas e linhas
 
     def __len__(self):
         """Returns the number of data points."""
-        return self.X.shape[0]
+        return self.X.shape[0] #devolve o numero de linhas do np array
 
     def hasLabel(self):
         """Returns True if the dataset constains labels (a dependent variable)"""
-        return self.Y is not None
+        return self.Y is not None #numero de lables dependentes
 
     def getNumFeatures(self):
         """Returns the number of features (numero de colunas de X)"""
-        return self.X.shape[1]
-    # ou
-    #    return len(self.X), neste caso era necessario previnir o colunas X sem nomes
+        return self.X.shape[1] #numero de colunas dos dados
 
     def getNumClasses(self):
         """Returns the number of label classes or 0 if the dataset has no dependent variable."""
-        unique = np.unique(self.Y, return_counts=False)
+        unique = np.unique(self.Y, return_counts=False) #numero de variaveis dependentes
         return len(unique) if self.hasLabel() else 0
 
     def writeDataset(self, filename, sep=","):
@@ -92,16 +90,16 @@ class Dataset:
         fullds = np.hstack((self.X, self.Y.reshape(len(self.Y), 1)))
         np.savetxt(filename, fullds, delimiter=sep)
 
-    def toDataframe(self):
+    def toDataframe(self): #convert um dataset num dataframe
         """ Converts the dataset into a pandas DataFrame"""
-        import pandas as pd
+
         if self.Y is None:
             dataset = pd.DataFrame(self.X.copy(), columns=self._xnames[:])
         else:
             dataset = pd.DataFrame(np.hstack((self.X, self.Y.reshape(len(self.Y), 1))), columns=np.hstack((self._xnames, self._yname)))
         return dataset
 
-    def getXy(self):
+    def getXy(self): #buscar os dados
         return self.X, self.Y
 
 def summary(dataset, format='df'):
@@ -113,24 +111,23 @@ def summary(dataset, format='df'):
     :type format: str, optional
     """
     if dataset.hasLabel():
-        data = np.hstack((dataset.X,dataset.Y.reshape(len(dataset.Y))))
+        data = np.hstack((dataset.X,dataset.Y.reshape(len(dataset.Y)))) #se tiver label em variaveis dependentes
         names= [dataset._xnames,dataset._yname]
     else:
         data = np.hstack((dataset.X, dataset.Y.reshape(len(dataset.Y))))
         names = [dataset._xnames]
-    mean = np.mean(data, axis=0)
-    var = np.var(data, axis=0)
-    maxi = np.max(data, axis=0)
-    mini = np.min(data, axis=0)
+    mean = np.mean(data, axis=0) #calculo da média
+    var = np.var(data, axis=0) #calculo da variância
+    maxi = np.max(data, axis=0) #calculo do máximo
+    mini = np.min(data, axis=0) #calculo do minimo
     stats = {}
-    for i in range(data.shape[1]):
+    for i in range(data.shape[1]): #guardar tudo numa lista
         stat = {'mean' : mean[i]
                 ,'var' : var[i]
                 ,'max' : maxi[i]
                 ,'min' : mini[i]}
         stats[names[i]] = stat
-    if format == 'df':
-        import pandas as pd
+    if format == 'df': #tramsformar em um dataset
         df= pd.DataFrame(stats)
         return df
     else:

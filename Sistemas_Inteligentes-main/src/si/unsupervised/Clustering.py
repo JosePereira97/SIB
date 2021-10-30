@@ -22,7 +22,6 @@ class Kmeans:
     def initcentroids(self,dataset):
         X = dataset.X
         self.centroids = np.array([np.random.uniform(low=self.min[i], high=self.max[i], size=(self.k,)) for i in range(X.shape[1])]).T
-        #tentar modo shuffle
 
     def closest_centroid(self,x):
         dist = euclidean(x,self.centroids)
@@ -46,7 +45,6 @@ class Kmeans:
             cent = []
             for i in range(self.k):
                 cent.append(np.mean(X[idxs == i], axis = 0))
-            #cent= [np.mean(X[idxs == i], axis = 0) for i in range(self.k)] lista de compreensão
             self.centroids = np.array(cent)
             change = np.all(old_ind == idxs)
             old_ind = idxs

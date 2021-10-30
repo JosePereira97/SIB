@@ -18,22 +18,21 @@ class VarianceThreshold:
 
     def fit(self,dataset):
         X = dataset.X
-        self.var = np.var(X, axis=0)
+        self.var = np.var(X, axis=0) #vai calcular a variância dos valores do dataset
 
     def transform(self, dataset, inline = False):
         X = dataset.X
         cond = self.var > self.threshold
         ind = []
         for i in range(len(cond)):
-            if cond[i]: ind.append(i)
-        X_trans = X[:,ind]
-        xnames = [dataset._xnames[i] for i in ind]
+            if cond[i]: ind.append(i) #se a variância for maior do que o threshold
+        X_trans = X[:,ind] #bucar os valores que expliques a variância
+        xnames = [dataset._xnames[i] for i in ind] #buscar os nomes das colunas em que o valor de variância é mairo que o threshhold
         if inline:
             dataset.X = X_trans
             dataset._xnames = xnames
             return dataset
         else:
-            from ..data import Dataset
             Dataset(X_trans, copy(dataset.Y), xnames, copy(dataset.yname))
 
 class SelectKBest:
@@ -51,20 +50,20 @@ class SelectKBest:
             self.k = k
 
     def fit(self, dataset):
-        self.Fscore, self.pval= self.score_fun(dataset)
+        self.Fscore, self.pval= self.score_fun(dataset) #vai buscar os valores da regressão de pearson
 
     def fit_transform(self, dataset, inline=False):
         self.fit(dataset)
-        return self.transform(dataset, inline=inline)
+        return self.transform(dataset, inline=inline) #return do tranform inline, sem os Y
 
-    def transform(self, dataset, inline=False):
+    def transform(self, dataset, inline=False): #selecionar os melhores valores com K
         ordata = copy(dataset.X)
         ornames = copy(dataset.xnames)
         if self.k > ordata.shape[1]:
             warnings.warn('K value greater than the number of features available')
             self.k = ordata.shape[1]
         #seleção de lista
-        sel_list = np.argsort(self.Fscore)[-self.k:]
+        sel_list = np.argsort(self.Fscore)[-self.k:] 
         ndata = ordata[:, sel_list]
         nnames = [ornames[index] for index in sel_list]
         if inline:
@@ -74,7 +73,7 @@ class SelectKBest:
         else:
             return Dataset(ndata, copy(dataset.Y), nnames, copy(dataset.yname))
 
-def f_classif(dataset):
+def f_classif(dataset): #realizar a anova
     'ANOVA'
     X, y = dataset.getXy()
     args = []
@@ -84,7 +83,7 @@ def f_classif(dataset):
     F_stat, pvalue = f_oneway(*args )
     return F_stat, pvalue
 
-def f_regress(dataset):
+def f_regress(dataset): #regressão de pearson
     'Regressao Pearson'
     X, y = dataset.getXy()
     cor_coef = np.array([stats.pearsonr(X[:, i], y)[0] for i in range(X.shape[1])])
