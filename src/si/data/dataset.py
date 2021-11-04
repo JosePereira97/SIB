@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
+from util.util_mal import label_gen
 
-from si.util.util import label_gen
 
 __all__ = ['Dataset']
 
@@ -15,7 +15,10 @@ class Dataset:
             raise Exception("Trying to instanciate a DataSet without any data")
         self.X = X
         self.Y = Y
-        self._xnames = xnames if xnames else label_gen(X.shape[1]) #vamos criar o nome das colunas consoante o exel
+        if xnames:#vamos criar o nome das colunas consoante o exel
+            self._xnames = xnames
+        else:
+            self._xnames = label_gen(X.shape[1])
         self._yname = yname if yname else 'Y' #se n tiver nome a variavel dependente dá se o nome de Y
 
     @classmethod
@@ -49,16 +52,16 @@ class Dataset:
         :return: [description]
         :rtype: [type]
         """
-        if ylabel is not None and ylabel in df.colums:
-            X = df.loc[:, df.colums != ylabel].to_numpy() #vai bucar os valores todos que n sejam 
-            Y = df.loc[:, df.colums == ylabel].to_numpy() #vai buscar os valores das variaveis dependentes
+        if ylabel is not None and ylabel in df.columns:
+            X = df.loc[:, df.columns != ylabel].to_numpy() #vai bucar os valores todos que n sejam
+            Y = df.loc[:, df.columns == ylabel].to_numpy() #vai buscar os valores das variaveis dependentes
             # ou df.loc[:,ylabel].to_numpy()
-            Xnames = df.colums.tolist().remove(ylabel) #nome das colunas todos os que n tiverem em y_label
+            Xnames = df.columns.tolist().remove(ylabel) #nome das colunas todos os que n tiverem em y_label
             Yname = ylabel#nome das linhas todos os que tiverem em y_label
         else:
             X= df.to_numpy()
             Y = None
-            Xnames= df.colums.tolist()
+            Xnames= df.columns.tolist()
             Yname = None
         return cls(X,Y,Xnames,Yname) #devolve a classe com os dados X,Y e os nomes de colunas e linhas
 
@@ -111,8 +114,11 @@ def summary(dataset, format='df'):
     :type format: str, optional
     """
     if dataset.hasLabel():
-        data = np.hstack((dataset.X,dataset.Y.reshape(len(dataset.Y)))) #se tiver label em variaveis dependentes
-        names= [dataset._xnames,dataset._yname]
+        data = np.hstack((dataset.X,dataset.Y.reshape(-1,1))) #se tiver label em variaveis dependentes
+        names= []
+        for i in dataset._xnames:
+            names.append(i)
+        names.append(dataset._yname)
     else:
         data = np.hstack((dataset.X, dataset.Y.reshape(len(dataset.Y))))
         names = [dataset._xnames]

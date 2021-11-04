@@ -1,7 +1,7 @@
 import numpy as np
 from copy import copy
 import warnings
-from ..data import Dataset
+from src.si.data.dataset import Dataset
 import scipy.stats as stats
 
 
@@ -33,10 +33,16 @@ class VarianceThreshold:
             dataset._xnames = xnames
             return dataset
         else:
-            Dataset(X_trans, copy(dataset.Y), xnames, copy(dataset.yname))
+            return Dataset(X_trans, copy(dataset.Y), xnames, copy(dataset._yname))
+
+    def fit_transform(self, dataset, inline = False):
+        self.fit(dataset)
+        return self.transform(dataset, inline = inline)
+
+
 
 class SelectKBest:
-    def __init__(self,k,score_fun):
+    def __init__(self,k,score_fun = 'f_regression'):
         if score_fun == "f_classif":
             self.score_fun = f_classif
         elif score_fun == "f_regression":
@@ -58,7 +64,7 @@ class SelectKBest:
 
     def transform(self, dataset, inline=False): #selecionar os melhores valores com K
         ordata = copy(dataset.X)
-        ornames = copy(dataset.xnames)
+        ornames = copy(dataset._xnames)
         if self.k > ordata.shape[1]:
             warnings.warn('K value greater than the number of features available')
             self.k = ordata.shape[1]
@@ -71,7 +77,7 @@ class SelectKBest:
             dataset.xnames = nnames
             return dataset
         else:
-            return Dataset(ndata, copy(dataset.Y), nnames, copy(dataset.yname))
+            return Dataset(ndata, copy(dataset.Y), nnames, copy(dataset._yname))
 
 def f_classif(dataset): #realizar a anova
     'ANOVA'

@@ -5,7 +5,7 @@ import numpy as np
 
 ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXZ'
 
-__all__ = ['label_gen', 'summary']
+__all__ = ['label_gen']
 
 
 def label_gen(n): #forma uma lista de colunas igual ao exel "A","B" etc...
@@ -28,7 +28,7 @@ def label_gen(n): #forma uma lista de colunas igual ao exel "A","B" etc...
 def euclidean(x,y): #vai calcular a distância euclidiana
     '''compute de distance to a n dimensional vector x to a list of m,n and summing
     x.shape = (n,) y.shape = (m,n)'''
-    dist = ((x-y)**2).sum(axis = 1)
+    dist = np.sqrt(np.sum((x - y)**2, axis=1))
     return dist
 
 def manhattan(x, y): #vai calcular a distância de manhattan

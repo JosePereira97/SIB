@@ -1,6 +1,6 @@
 import numpy as np
 from copy import copy
-from ..data import Dataset
+from src.si.data.dataset import Dataset
 
 class StandardScaler:
     """
@@ -48,7 +48,7 @@ class StandardScaler:
             dataset.X = Z
             return dataset
         else:
-            Dataset(Z, copy(dataset.Y), copy(dataset.X), copy(dataset.yname)) #copy para nao ter de verificar todos os labels
+            return Dataset(Z, copy(dataset.Y), copy(dataset._xnames), copy(dataset._yname)) #copy para nao ter de verificar todos os labels
 
     def fit_transform(self, dataset, inline=False):
         """
@@ -84,4 +84,4 @@ class StandardScaler:
             dataset.X = IT
             return dataset
         else:
-            Dataset(IT, copy(dataset.Y), copy(dataset.X),copy(dataset.yname))  # copy para nao ter de verificar todos os labels
+            Dataset(IT, copy(dataset.Y), copy(dataset.X),copy(dataset._yname))  # copy para nao ter de verificar todos os labels
