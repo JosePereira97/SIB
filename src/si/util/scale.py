@@ -44,7 +44,7 @@ class StandardScaler:
 
         """
         Z = (dataset.X -self.mean)/np.sqrt(self.var)
-        if inline:
+        if inline: #Inline: se for True -> acrescenta a coluna da standardização ao dataset; se for False -> cria uma nova coluna (Z) e copia as outras
             dataset.X = Z
             return dataset
         else:

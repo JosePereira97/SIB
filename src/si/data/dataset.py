@@ -120,7 +120,7 @@ def summary(dataset, format='df'):
             names.append(i)
         names.append(dataset._yname)
     else:
-        data = np.hstack((dataset.X, dataset.Y.reshape(len(dataset.Y))))
+        data = dataset.X.copy()
         names = [dataset._xnames]
     mean = np.mean(data, axis=0) #calculo da média
     var = np.var(data, axis=0) #calculo da variância

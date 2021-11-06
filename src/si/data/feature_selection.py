@@ -20,14 +20,17 @@ class VarianceThreshold:
         X = dataset.X
         self.var = np.var(X, axis=0) #vai calcular a variância dos valores do dataset
 
-    def transform(self, dataset, inline = False):
+    def transform(self, dataset, inline = False): #Tranform filtrar dados
         X = dataset.X
         cond = self.var > self.threshold
         ind = []
         for i in range(len(cond)):
-            if cond[i]: ind.append(i) #se a variância for maior do que o threshold
+            if cond[i]:
+                ind.append(i) #se a variância for maior do que o threshold
         X_trans = X[:,ind] #bucar os valores que expliques a variância
-        xnames = [dataset._xnames[i] for i in ind] #buscar os nomes das colunas em que o valor de variância é mairo que o threshhold
+        xnames = []
+        for i in ind:
+            xnames.append(dataset._xnames[i]) #buscar os nomes das colunas em que o valor de variância é mairo que o threshhold
         if inline:
             dataset.X = X_trans
             dataset._xnames = xnames
@@ -51,7 +54,7 @@ class SelectKBest:
             raise Exception("Score function not available \n Score functions: f_classif, f_regression")
 
         if k <= 0:
-            raise Exception("K value invalid. K-value must be >0")
+            raise Exception("K value invalid. K-value must be >0") #numero de top selecionar
         else:
             self.k = k
 
@@ -63,28 +66,28 @@ class SelectKBest:
         return self.transform(dataset, inline=inline) #return do tranform inline, sem os Y
 
     def transform(self, dataset, inline=False): #selecionar os melhores valores com K
-        ordata = copy(dataset.X)
-        ornames = copy(dataset._xnames)
-        if self.k > ordata.shape[1]:
+        data = copy(dataset.X)
+        names = copy(dataset._xnames)
+        if self.k > data.shape[1]:
             warnings.warn('K value greater than the number of features available')
-            self.k = ordata.shape[1]
+            self.k = data.shape[1]
         #seleção de lista
-        sel_list = np.argsort(self.Fscore)[-self.k:] 
-        ndata = ordata[:, sel_list]
-        nnames = [ornames[index] for index in sel_list]
+        sel_list = np.argsort(self.Fscore)[-self.k:]
+        Xdata = data[:, sel_list] # tranform data
+        Xnames = [names[index] for index in sel_list]
         if inline:
-            dataset.X = ndata
-            dataset.xnames = nnames
+            dataset.X = Xdata
+            dataset._xnames = Xnames
             return dataset
         else:
-            return Dataset(ndata, copy(dataset.Y), nnames, copy(dataset._yname))
+            return Dataset(Xdata, copy(dataset.Y), Xnames, copy(dataset._yname))
 
 def f_classif(dataset): #realizar a anova
     'ANOVA'
-    X, y = dataset.getXy()
+    X, Y = dataset.getXy()
     args = []
-    for k in np.unique(y):
-        args.append(X[y == k, :])
+    for k in np.unique(Y):
+        args.append(X[Y == k, :])
     from scipy.stats import f_oneway
     F_stat, pvalue = f_oneway(*args )
     return F_stat, pvalue

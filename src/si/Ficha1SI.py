@@ -89,7 +89,7 @@ reduced = pca.fit_transform(iris)[0]
 print(pca.explained_variances())
 
 iris_pca = Dataset(reduced,iris.Y,xnames=['pc1','pc2'],yname='class')
-iris_pca.toDataframe()
+print(iris_pca.toDataframe())
 
 
 plt.scatter(iris_pca.X[:,0], iris_pca.X[:,1])

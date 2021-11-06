@@ -21,14 +21,17 @@ class Kmeans:
 
     def initcentroids(self,dataset):
         X = dataset.X
-        #self.centroids = np.array([np.random.uniform(low=self.min[i], high=self.max[i], size=(self.k,)) for i in range(X.shape[1])]).T
-        rng = np.random.default_rng()
-        self.centroids = rng.choice(X, size=(self.k), replace=False, p=None, axis=0)
+        cent = []
+        for i in range(X.shape[1]):
+            cent.append(np.random.uniform(low=self.min[i], high=self.max[i], size=(self.k,)))
+
+        self.centroids = np.array(cent).T
+
 
     def closest_centroid(self,x):
-        dist = euclidean(x,self.centroids)
+        dist = self.dist(x,self.centroids)
         closest_centroid_ind = np.argmin(dist,axis = 0)
-        return closest_centroid_ind
+        return closest_centroid_ind #return dos indices dos centroides mais pequenos
 
     def fit_transform(self,dataset):
         self.fit(dataset)
@@ -37,8 +40,7 @@ class Kmeans:
 
     def transform(self,dataset):
         self.initcentroids(dataset)
-        print(self.centroids)
-        X = dataset.X
+        X = dataset.X.copy()
         change = False
         count = 0
         old_ind = np.zeros(X.shape[0])
@@ -67,10 +69,10 @@ class PCA:
         X_scaled = StandardScaler().fit_transform(dataset)  #Normalização por standart scaler
         features_scaled = X_scaled.X.T
         if self.using == "svd":
-            self.vectors, self.values, rv = np.linalg.svd(features_scaled)
+            self.vectors, self.values, rv = np.linalg.svd(features_scaled) #valores próprios
         else:
             cov_matrix = np.cov(features_scaled)
-            self.values, self.vectors = np.linalg.eig(cov_matrix)
+            self.values, self.vectors = np.linalg.eig(cov_matrix) #valores próprio
         self.sorted_comp = np.argsort(self.values)[::-1]  #gera uma lista com os idexs das colunas ordenadas por importancia de componte
         self.s_value = self.values[self.sorted_comp]   #colunas dos valores e vetore sao reordenadas pelos idexes das colunas
         self.s_vector = self.vectors[:, self.sorted_comp]
