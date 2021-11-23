@@ -4,7 +4,7 @@ import warnings
 
 
 class Kmeans:
-    def __init__(self, k :int, itera = 1000, dist = 'euclidean'):
+    def __init__(self, k :int, itera = 100, dist = 'euclidean'):
         self.k = k
         self.itera = itera
         if dist == 'euclidean':
@@ -77,19 +77,22 @@ class PCA:
         self.s_value = self.values[self.sorted_comp]   #colunas dos valores e vetore sao reordenadas pelos idexes das colunas
         self.s_vector = self.vectors[:, self.sorted_comp]
         if self.n_components not in range(0,dataset.X.shape[1]+1):
-            warnings.warn('Number of components is not between 0 and '+str(x.shape[1]))
-            self.n_components = x.shape[1]
-            warnings.warn('Number of components defined as ' + str(x.shape[1]))
+            warnings.warn('Number of components is not between 0 and '+str(dataset.X.shape[1]))
+            self.n_components = dataset.X.shape[1]
+            warnings.warn('Number of components defined as ' + str(dataset.X.shape[1]))
         self.vetor_subset = self.s_vector[:, 0:self.n_components] #gera um conjunto apartir dos vetores e values ordenados
         X_reduced = np.dot(self.vetor_subset.transpose(), features_scaled).transpose()
         return X_reduced
 
     def explained_variances(self):
-        self.values_subset = self.s_value[0:self.n_components]
-        return np.sum(self.values_subset), self.values_subset
+        s = np.sum(self.s_value)
+        percentage = []
+        for i in self.s_value:
+            percentage.append(i/s*100)
+        return np.array(percentage)
 
     def fit_transform(self,dataset):
         x_reduced = self.transform(dataset)
-        e_var, vari = self.explained_variances()
-        return x_reduced, e_var, vari
+        e_var = self.explained_variances()
+        return x_reduced, e_var
 
