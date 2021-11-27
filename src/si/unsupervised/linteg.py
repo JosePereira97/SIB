@@ -1,0 +1,26 @@
+
+
+
+
+
+
+
+
+
+
+
+    def fit(self, dataset): ##Pedir ao Moncaixa
+
+
+
+
+
+
+
+
+
+
+
+
+
+

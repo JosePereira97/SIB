@@ -38,5 +38,37 @@ class CrossValidationScore:
 
 class GridSearchCV:
 
-    def __init__(self, dataset, parameters):
-        pass
+    def __init__(self, model, dataset, parameters, **kwargs):
+        self.model = model
+        self.dataset = dataset
+        hasparam = [hasattr(self.model, param) for param in parameters]
+        if np.all(hasparam):
+            self.parameters = parameters
+        else:
+            index = hasparam.index(False)
+            keys = list(parameters.keys())
+            raise ValueError (f"Wrong parameters: {keys[index]}")
+        self.kwargs = kwargs
+        self.results = None
+    
+    def run(self):
+        self.results = []
+        attrs = list(self.parameters.keys())
+        values = list(self.parameters.values())
+        for conf in itertools.product(*value):
+            for i in range(len(attrs)):
+                setattr(self.model, attrs[i], conf[i])
+            scores = CrossValidationScore(self.model, self.dataset, **self.kwargs).run()
+            self.results.append((conf, scores))
+        return self.results
+
+    def toDataFrame(self):
+        import pandas as pd
+        assert self.results, 'The grid search needs to be ran'
+        date = dict()
+        for i,k in enumerate(self.parameters.keys()):
+            v=[]
+            for r in self.results:
+                v.append(r[0][i])
+            date[k] = v
+        return 

@@ -35,3 +35,6 @@ def manhattan(x, y): #vai calcular a distância de manhattan
     dist = np.abs(x - y)
     dist = np.sum(dist)
     return dist
+
+def add_intersect(X):
+    return np.hstack((np.ones((X.shape[0], 1)), X))
