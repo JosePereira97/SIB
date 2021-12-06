@@ -1,104 +1,126 @@
 import numpy as np
+from scipy import stats
 from copy import copy
 import warnings
-from src.si.data.dataset import Dataset
-import scipy.stats as stats
 
 
 class VarianceThreshold:
-    def __init__(self,threshold=0):
-        '''
-        the variance threshold is a simple baseline approach to feature selection
-        it removes all features which variance doesn't meet some threshold limit
-        it removes all zero-variance features, i.e..
-        '''
+
+    def __init__(self, threshold=0):
+        """The variance threshold is a simple baseline approach to feature selection.
+           It removes all features which variance doesn't meet some threshold. By default,
+           it removes all zero-variance features, i.e., features that have the same value in all samples.
+
+        :param threshold: The non negative threshold value, defaults to 0.
+        :type threshold: int, optional
+        """
         if threshold < 0:
-            warnings.warn('thr e threshold must be a non negative value')
+            warnings.warn("The thershold must be a non-negative value.")
         self.threshold = threshold
 
-    def fit(self,dataset):
+    def fit(self, dataset):
         X = dataset.X
-        self.var = np.var(X, axis=0) #vai calcular a variância dos valores do dataset
+        self._var = np.var(X, axis=0)
 
-    def transform(self, dataset, inline = False): #Tranform filtrar dados
+    def transform(self, dataset, inline=False):
         X = dataset.X
-        cond = self.var > self.threshold
-        ind = []
-        for i in range(len(cond)):
-            if cond[i]:
-                ind.append(i) #se a variância for maior do que o threshold
-        X_trans = X[:,ind] #bucar os valores que expliques a variância
-        xnames = []
-        for i in ind:
-            xnames.append(dataset._xnames[i]) #buscar os nomes das colunas em que o valor de variância é mairo que o threshhold
+        cond = self._var > self.threshold
+        idxs = [i for i in range(len(cond)) if cond[i]]
+        X_trans = X[:, idxs]
+        xnames = [dataset._xnames[i] for i in idxs]
         if inline:
             dataset.X = X_trans
             dataset._xnames = xnames
             return dataset
         else:
-            return Dataset(X_trans, copy(dataset.Y), xnames, copy(dataset._yname))
-
-    def fit_transform(self, dataset, inline = False):
-        self.fit(dataset)
-        return self.transform(dataset, inline = inline)
-
-
-
-class SelectKBest:
-    def __init__(self,k,score_fun = 'f_regression'):
-        if score_fun == "f_classif":
-            self.score_fun = f_classif
-        elif score_fun == "f_regression":
-            self.score_fun = f_regress
-        else:
-            raise Exception("Score function not available \n Score functions: f_classif, f_regression")
-
-        if k <= 0:
-            raise Exception("K value invalid. K-value must be >0") #numero de top selecionar
-        else:
-            self.k = k
-
-    def fit(self, dataset):
-        self.Fscore, self.pval= self.score_fun(dataset) #vai buscar os valores da regressão de pearson
+            from .dataset import Dataset
+            return Dataset(copy(X_trans),
+                           copy(dataset.y),
+                           xnames,
+                           copy(dataset._yname)
+                           )
 
     def fit_transform(self, dataset, inline=False):
         self.fit(dataset)
-        return self.transform(dataset, inline=inline) #return do tranform inline, sem os Y
+        return self.transform(dataset, inline=inline)
 
-    def transform(self, dataset, inline=False): #selecionar os melhores valores com K
-        data = copy(dataset.X)
-        names = copy(dataset._xnames)
-        if self.k > data.shape[1]:
-            warnings.warn('K value greater than the number of features available')
-            self.k = data.shape[1]
-        #seleção de lista
-        sel_list = np.argsort(self.Fscore)[-self.k:]
-        Xdata = data[:, sel_list] # tranform data
-        Xnames = [names[index] for index in sel_list]
+
+def f_classif(dataset):
+    """Scoring function for classifications.
+    Compute the ANOVA F-value for the provided sample.
+
+
+    :param dataset: A labeled dataset
+    :type dataset: Dataset
+    :return: F scores and p-values
+    :rtype: a tupple of np.arrays
+    """
+    X = dataset.X
+    y = dataset.y
+    # selectiona os registos por class
+    args = [X[y == a] for a in np.unique(y)]
+    # Calcula as F-statistics e p values.
+    # Queremos identificar se existe uma differença significativa
+    # entre os tratamentos (features)
+    F, p = stats.f_oneway(*args)
+    return F, p
+
+
+def f_regress(dataset):
+    """Scoring function for regressions
+
+    :param dataset: A labeled dataset
+    :type dataset: Dataset
+    :return: F scores and p-values
+    :rtype: a tupple of np.arrays
+    """
+    X = dataset.X
+    y = dataset.y
+    correlation_coefficient = np.array([stats.pearsonr(X[:, i], y)[0] for i in range(X.shape[1])])
+    deg_of_freedom = y.size - 2
+    corr_coef_squared = correlation_coefficient ** 2
+    F = corr_coef_squared / (1 - corr_coef_squared) * deg_of_freedom
+    p = stats.f.sf(F, 1, deg_of_freedom)
+    return F, p
+
+
+class SelectKBest:
+
+    def __init__(self, k: int, score_func=f_classif):
+        """[summary]
+
+        :param k: [description]
+        :type k: int
+        :param score_func: [description], defaults to f_classif
+        :type score_func: [type], optional
+        """
+        self.k = k
+        self.score_func = score_func
+
+    def fit(self, dataset):
+        self.F, self.p = self.score_func(dataset)
+
+    def transform(self, dataset, inline=False):
+        # Nota que os p e F têm uma relação inversa, qto maior
+        # o valor de F menor o p.
+        # Maiores valores de F correspondem a uma rejeição com probabilidade
+        # (1-p) da hipótese nula.
+        idxs = self.F.argsort()[-self.k:]
+        idxs.sort()
+        X_trans = dataset.X[:, idxs.tolist()]
+        xnames = [dataset._xnames[i] for i in idxs.tolist()]
         if inline:
-            dataset.X = Xdata
-            dataset._xnames = Xnames
+            dataset.X = X_trans
+            dataset._xnames = xnames
             return dataset
         else:
-            return Dataset(Xdata, copy(dataset.Y), Xnames, copy(dataset._yname))
+            from .dataset import Dataset
+            return Dataset(copy(X_trans),
+                           copy(dataset.y),
+                           xnames,
+                           copy(dataset._yname)
+                           )
 
-def f_classif(dataset): #realizar a anova
-    'ANOVA'
-    X, Y = dataset.getXy()
-    args = []
-    for k in np.unique(Y):
-        args.append(X[Y == k, :])
-    from scipy.stats import f_oneway
-    F_stat, pvalue = f_oneway(*args )
-    return F_stat, pvalue
-
-def f_regress(dataset): #regressão de pearson
-    'Regressao Pearson'
-    X, y = dataset.getXy()
-    cor_coef = np.array([stats.pearsonr(X[:, i], y)[0] for i in range(X.shape[1])])
-    dof = y.size - 2  # degrees of freedom
-    cor_coef_sqrd = cor_coef ** 2
-    F = cor_coef_sqrd / (1 - cor_coef_sqrd) * dof
-    from scipy.stats import f
-    p = f.sf(F, 1, dof)
-    return F, p
+    def fit_transform(self, dataset, inline=False):
+        self.fit(dataset)
+        return self.transform(dataset, inline=inline)

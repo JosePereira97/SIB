@@ -1,6 +1,6 @@
 import numpy as np
 from copy import copy
-from src.si.data.dataset import Dataset
+
 
 class StandardScaler:
     """
@@ -13,9 +13,9 @@ class StandardScaler:
     feature dominance.
     Attributes
     ----------
-    mean : numpy array of shape (n_features, )
+    _mean : numpy array of shape (n_features, )
         The mean of each feature in the training set.
-    var : numpy array of shape (n_features, )
+    _var : numpy array of shape (n_features, )
         The variance of each feature in the training set.
     """
 
@@ -27,8 +27,9 @@ class StandardScaler:
         ----------
         dataset : A Dataset object to be standardized
         """
-        self.mean = np.mean(dataset.X, axis = 0)
-        self.var= np.var(dataset.X, axis= 0)
+        X = dataset.X
+        self._mean = np.mean(X, axis=0)
+        self._var = np.var(X, axis=0)
 
     def transform(self, dataset, inline=False):
         """
@@ -37,18 +38,22 @@ class StandardScaler:
         Parameters
         ----------
         dataset : A Dataset object to be standardized
-        Inline: if false(creats a new dataset), else(replaces dataset.x)
         Returns
         -------
         A Dataset object with standardized data.
-
         """
-        Z = (dataset.X -self.mean)/np.sqrt(self.var)
-        if inline: #Inline: se for True -> acrescenta a coluna da standardização ao dataset; se for False -> cria uma nova coluna (Z) e copia as outras
+        X = dataset.X
+        Z = (X - self._mean) / np.sqrt(self._var)
+
+        if inline:
             dataset.X = Z
             return dataset
         else:
-            return Dataset(Z, copy(dataset.Y), copy(dataset._xnames), copy(dataset._yname)) #copy para nao ter de verificar todos os labels
+            from . import Dataset
+            return Dataset(Z,
+                           copy(dataset.y),
+                           copy(dataset._xnames),
+                           copy(dataset._yname))
 
     def fit_transform(self, dataset, inline=False):
         """
@@ -78,10 +83,13 @@ class StandardScaler:
         -------
         Dataset object
         """
-        self.fit(dataset)
-        IT = dataset.X * np.sqrt(self.var) + self.mean
+        X = dataset.X * np.sqrt(self._var) + self._mean
         if inline:
-            dataset.X = IT
+            dataset.X = X
             return dataset
         else:
-            Dataset(IT, copy(dataset.Y), copy(dataset.X),copy(dataset._yname))  # copy para nao ter de verificar todos os labels
+            from . import Dataset
+            return Dataset(X,
+                           copy(dataset.y),
+                           copy(dataset._xnames),
+                           copy(dataset._yname))
