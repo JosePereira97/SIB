@@ -26,6 +26,7 @@ class Ensemble(Model):
     def predict(self, x):
         assert self.is_fitted, 'Model not fitted'
         preds = [model.predict(x) for model in self.models]
+        print(preds)
         vote = self.fvote(preds)
         return vote
 

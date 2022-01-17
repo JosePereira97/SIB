@@ -134,7 +134,7 @@ class NN(Model):
                 print(f'epoch {epoch + 1}/{self.epochs}, error = {self.history[epoch]}')
             else:
                 print(f"epoch {epoch + 1}/{self.epochs}, error = {self.history[epoch]}", end='\r')
-        self.is_fitted = True
+        self.is_fitted = True #não estava a funcionar sem quebrar o ciclo for em qualquer ponto
 
     def predict(self, x):
         assert self.is_fitted, "Model must be fitted before prediction"
@@ -216,6 +216,64 @@ class Conv2D(Layer):
         self.bias -= learning_rate * db
 
         return input_error
+
+class Pooling2D(Layer):
+
+    def __init__(self, size=2, stride=2):
+        self.size = size
+        self.stride = stride
+
+    def pool(X_col):  # self?
+        raise NotImplementedError
+
+    def dpool(dX_col, dout_col, pool_cache):  # self?
+        raise NotImplementedError
+
+    def forward(self, input):
+        self.X_shape = input.shape
+        n, h, w, d = input.shape
+        h_out = (h - self.size) / self.stride + 1
+        w_out = (w - self.size) / self.stride + 1
+
+        if not w_out.is_integer() or not h_out.is_integer():
+            raise Exception('Invalid output dimension')
+
+        h_out, w_out = int(h_out), int(w_out)
+
+        X_reshaped = input.reshape(n * d, h, w, 1)
+        # TODO: alguém que arranje a im2col
+        self.X_col = im2col(X_reshaped, self.size, self.size, pad=0, stride=self.stride)  # im2col está errada. A fun que o prof deu nao é a mesma que usou
+
+        out, self.max_idx = self.pool(self.X_col)
+
+        out = out.reshape(h_out, w_out, n, d)
+        out = out.transpose(3, 2, 0, 1)
+
+        return out
+
+    def backward(self, erro, learning_rate):
+        n, w, h, d = self.X_shape
+
+        dX_col = np.zeros_like(self.X_col)
+        dout_col = erro.transpose(1, 2, 3, 0).ravel()
+
+        dX = self.dpool(dX_col, dout_col, self.max_idx)
+        # TODO: alguém que arranje a col2im
+        dX = col2im(dX, (n * d, h, w, 1), self.size, self.size, pad=0, stride=self.stride)  # col2im está errada. A fun que o prof deu nao é a mesma que usou
+        dX = dX.reshape(self.X_shape)
+
+        return dX
+
+class MaxPooling2D(Pooling2D):
+
+    def pool(X_col):
+        max_idx = np.argmax(X_col, axis=0)
+        out = X_col[max_idx, range(max_idx.size)]
+        return out, max_idx
+
+    def dpool(dX_col, dout_col, pool_cache):
+        dX_col[pool_cache, range(dout_col.size)] = dout_col
+        return dX_col
 
 
 class MaxPoling(Layer):
