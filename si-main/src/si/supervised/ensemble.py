@@ -3,11 +3,11 @@ from si.supervised.model import Model
 
 
 def majority(values):
-    return max(set(values), key=values.count)
+    return max(set(values), key=values.count) #calcular o máximo dos values e a sua posição
 
 
 def average(values):
-    return sum(values)/len(values)
+    return sum(values)/len(values) #vai calcular a média dos values
 
 
 class Ensemble(Model):
@@ -25,9 +25,8 @@ class Ensemble(Model):
 
     def predict(self, x):
         assert self.is_fitted, 'Model not fitted'
-        preds = [model.predict(x) for model in self.models]
-        print(preds)
-        vote = self.fvote(preds)
+        preds = [model.predict(x) for model in self.models] #return de uma lista com o predict the x a partir dos diferentes modelos na lista
+        vote = self.fvote(preds) #vai realizar o majority ou o averagr dos valores do predict escolhendo o melhor.
         return vote
 
     def cost(self, X=None, Y=None):
