@@ -37,13 +37,13 @@ class DecisionTree(Model):
         probas = []
         # for each unique label calculate the probability for it
         for one_class in self.classes:
-            proba = y[y == one_class].shape[0] / y.shape[0]
+            proba = y[y == one_class].shape[0] / y.shape[0] #calcular a probabilidade de uma calsse estar contida num nó
             probas.append(proba)
-        return np.asarray(probas)
+        return np.asarray(probas) #transforma e retorna a lista num np array
 
     def gini(self, probas):
         '''Calculates gini criterion'''
-        return 1 - np.sum(probas**2)
+        return 1 - np.sum(probas**2) #calcula a probabilidade de uma variável ser erradamente classificada, sendo escolhida aleatoriamente
 
     def calcImpurity(self, y):
         '''Wrapper for the impurity calculation. Calculates probas first and then passses them
@@ -58,7 +58,7 @@ class DecisionTree(Model):
         bestThresh = None
         bestInfoGain = -999
 
-        impurityBefore = self.calcImpurity(y)
+        impurityBefore = self.calcImpurity(y) #calcula the probas for no y default
 
         # for each column in X
         for col in range(X.shape[1]):
@@ -142,8 +142,9 @@ class DecisionTree(Model):
         # splitting recursevely
         self.buildDT(x_right, y_right, node.right)
         self.buildDT(x_left, y_left, node.left)
+        #continua o split da árvore até chegar ao seu fim
 
-    def fit(self, dataset):
+    def fit(self, dataset): #fazer o fit usando o DT
         self.dataset = dataset
         X, y = dataset.getXy()
         # the dataset classes
@@ -172,13 +173,18 @@ class DecisionTree(Model):
 
     def predict(self, x):
         assert self.is_fitted, 'Model must be fit before predicting'
-        pred = np.argmax(self.predictSample(x, self.Tree))
+        pred = np.argmax(self.predictSample(x, self.Tree)) #devolve a melhor hipotese, neste caso classe para o respetivo valor.
         return pred
 
     def cost(self, X=None, y=None):
-        X = X if X is not None else self.dataset.X
-        y = y if y is not None else self.dataset.y
+        if X is not None:
+            X = X
+        else:
+            X = self.dataset.X
+        if y is not None:
+            y = y
+        else:
+            y = self.dataset.y
 
-        y_pred = np.ma.apply_along_axis(self.predict,
-                                        axis=0, arr=X.T)
+        y_pred = np.ma.apply_along_axis(self.predict, axis=0, arr=X.T) #vai correr a função predict ao longo das colunas, a partir da transposta
         return accuracy_score(y, y_pred)
