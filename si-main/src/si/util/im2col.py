@@ -114,13 +114,21 @@ def im2col(X, W_shape, pad, stride):
 
 
 def col2im(X_col, X_shape, W_shape, pad, stride):
+    p = pad
+    if isinstance(p, int):
+        p = (p, p, p, p)
+
+    if isinstance(p, tuple):
+        if len(p) == 2:
+            p = (p[0], p[0], p[1], p[1])
+
     s = stride
-    pr1, pr2, pc1, pc2 = pad
+    pr1, pr2, pc1, pc2 = p
     fr, fc, n_in, n_out = W_shape
     n_ex, in_rows, in_cols, n_in = X_shape
 
     X_pad = np.zeros((n_ex, n_in, in_rows + pr1 + pr2, in_cols + pc1 + pc2))
-    k, i, j = _im2col_indices((n_ex, n_in, in_rows, in_cols), fr, fc, pad, s)
+    k, i, j = _im2col_indices((n_ex, n_in, in_rows, in_cols), fr, fc, p, s)
 
     X_col_reshaped = X_col.reshape(n_in * fr * fc, -1, n_ex)
     X_col_reshaped = X_col_reshaped.transpose(2, 0, 1)
